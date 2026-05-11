@@ -1,0 +1,14 @@
+{
+  "_doc": "Vendor → category lookup used by categorise_and_insert_expense. Match is case-insensitive substring on the vendor field. First hit wins; a vendor not in this list lands as category=null and category_source='manual', flagged for the reviewer to set during HITL approval.",
+  "categories": [
+    {"category": "Travel/Transport", "matches": ["uber", "lyft", "bolt", "addison lee", "free now", "taxi", "minicab", "trainline", "lner", "great western", "crosscountry", "sncf", "trenitalia", "ouigo", "tfl", "oyster", "parking", "ncp", "fuel", "shell", "bp", "esso"]},
+    {"category": "Travel/Lodging", "matches": ["airbnb", "booking.com", "hotels.com", "marriott", "hilton", "premier inn", "travelodge", "ibis", "novotel", "accor"]},
+    {"category": "Meals/Client", "matches": ["restaurant"]},
+    {"category": "Meals/Team", "matches": ["pret", "leon", "deliveroo", "uber eats", "just eat", "starbucks", "costa coffee", "nero"]},
+    {"category": "Office Supplies", "matches": ["amazon", "ebay", "argos", "ryman", "viking direct"]},
+    {"category": "Software", "matches": ["github", "gitlab", "vercel", "linear", "notion", "figma", "slack", "anthropic", "openai", "datadog", "sentry", "stripe", "google workspace", "microsoft 365", "atlassian", "jetbrains"]},
+    {"category": "Conferences", "matches": ["eventbrite", "tito", "summit", "conference", "meetup"]},
+    {"category": "Communications", "matches": ["bt ", "vodafone", "ee ", "o2 ", "three "]},
+    {"category": "Professional Fees", "matches": ["legal", "solicitor", "barrister", "accounting", "audit"]}
+  ]
+}

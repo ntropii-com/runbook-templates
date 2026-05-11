@@ -1,0 +1,8 @@
+# Runtime dependencies for document-ingest.
+# Worker base image already provides ntro-core + temporalio + uv +
+# ntro.private.* packages; this file lists per-workflow venv installs.
+
+ntro-core>=0.1.0
+ntro-providers>=0.1.0           # capability ABCs + reference impls
+ntro-provider-local>=0.1.0      # pdfplumber for PDF parse, filesystem for storage
+ntro-provider-anthropic>=0.1.0  # Haiku for AI extraction; ships schema-routed prompt library
