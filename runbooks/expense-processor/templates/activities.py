@@ -41,7 +41,7 @@ from typing import Any
 from uuid import uuid4
 
 from pydantic import ValidationError
-from temporalio import activity
+from ntro.workflow import activity
 
 import ntro.subledger
 from ntro.data import get_data_plane

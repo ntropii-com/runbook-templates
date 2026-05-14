@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
-from temporalio import workflow
+from ntro.workflow import runbook
 
 from ntro.ingest import IngestOutcome
 from ntro.workflow import NtroWorkflow, ui_step
@@ -40,7 +40,7 @@ from .models import (
 )
 
 
-@workflow.defn
+@runbook.defn
 class ExpenseProcessorWorkflow(NtroWorkflow):
     def __init__(self) -> None:
         super().__init__()
@@ -51,7 +51,7 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
 
     # ── Signal handlers ────────────────────────────────────────────
 
-    @workflow.signal
+    @runbook.signal
     async def data_submitted(self, payload: dict[str, Any]) -> None:
         """One expense row arriving via api-tenant after persistence
         to submitted_records. Just append; the main loop processes
@@ -70,7 +70,7 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
             )
         )
 
-    @workflow.signal
+    @runbook.signal
     async def document_submitted(self, payload: dict[str, Any]) -> None:
         """Document reference from api-tenant file upload path."""
         if not isinstance(payload, dict):
@@ -182,7 +182,7 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
                         "tenant_id_or_slug": ctx.tenant_slug,
                         "entity_id_or_slug": ctx.entity_slug,
                         "expected_kind": "expense",  # MCP path remains supported.
-                        "signal_task_id": workflow.info().workflow_id,
+                        "signal_task_id": runbook.info().workflow_id,
                         "signal_name": "document_submitted",
                     },
                 },
@@ -207,11 +207,11 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
                 timeout=timedelta(hours=ctx.collect_timeout_hours),
             )
             if self._submitted_documents:
-                root_task_id = workflow.info().workflow_id.split(":")[0]
+                root_task_id = runbook.info().workflow_id.split(":")[0]
                 pending_docs = self._submitted_documents[:]
                 self._submitted_documents.clear()
                 for doc in pending_docs:
-                    rows = await workflow.execute_activity(
+                    rows = await runbook.execute_activity(
                         ingest_submitted_document,
                         args=[doc.model_dump(mode="json"), root_task_id],
                         start_to_close_timeout=timedelta(minutes=2),
@@ -263,10 +263,10 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
         noticeable win only at hundreds-of-rows scale.
         """
         from uuid import UUID
-        root_task_id = UUID(workflow.info().workflow_id.split(":")[0])
+        root_task_id = UUID(runbook.info().workflow_id.split(":")[0])
         rows: list[ExpensePersistedEvent] = []
         for ev in self._submitted_events:
-            row = await workflow.execute_activity(
+            row = await runbook.execute_activity(
                 categorise_and_insert_expense,
                 CategoriseInput(
                     payload=ev,
@@ -371,8 +371,8 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
                 )
             )
         selected_rows = [r.id for r in rows if r.id not in self._rejected_row_ids]
-        root_task_id = UUID(workflow.info().workflow_id.split(":")[0])
-        return await workflow.execute_activity(
+        root_task_id = UUID(runbook.info().workflow_id.split(":")[0])
+        return await runbook.execute_activity(
             commit_expenses,
             CommitInput(
                 tenant_slug=ctx.tenant_slug,
@@ -452,8 +452,8 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
                 ],
             )
 
-        root_task_id = UUID(workflow.info().workflow_id.split(":")[0])
-        result = await workflow.execute_activity(
+        root_task_id = UUID(runbook.info().workflow_id.split(":")[0])
+        result = await runbook.execute_activity(
             post_expenses_to_gl,
             PostToGlInput(
                 tenant_slug=ctx.tenant_slug,
@@ -485,7 +485,7 @@ class ExpenseProcessorWorkflow(NtroWorkflow):
 
     # ── Entry point ───────────────────────────────────────────────
 
-    @workflow.run
+    @runbook.run
     async def run(self, ctx: ExpenseProcessorContext) -> ExpensePeriodResult:
         await self._step_collect(ctx)
         # Categorise runs as the tail of collect's lifecycle — pure

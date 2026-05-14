@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
-from temporalio import workflow
+from ntro.workflow import runbook
 
 from ntro.workflow import NtroWorkflow, ui_step
 
@@ -33,13 +33,13 @@ from .models import (
 )
 
 
-@workflow.defn
+@runbook.defn
 class DocumentIngestWorkflow(NtroWorkflow):
     def __init__(self) -> None:
         super().__init__()
         self._submitted: DocumentSubmissionPayload | None = None
 
-    @workflow.signal
+    @runbook.signal
     async def document_submitted(self, payload: dict[str, Any]) -> None:
         """Signal handler — receives the document reference from
         api-tenant after the file has been persisted to the tenant
@@ -74,7 +74,7 @@ class DocumentIngestWorkflow(NtroWorkflow):
                     "entity_id_or_slug": ctx.entity_slug,
                     "source": ctx.source,
                     "schema_slug": ctx.schema_slug,
-                    "signal_task_id": workflow.info().workflow_id,
+                    "signal_task_id": runbook.info().workflow_id,
                     "signal_name": "document_submitted",
                 },
             },
@@ -100,7 +100,7 @@ class DocumentIngestWorkflow(NtroWorkflow):
 
     @ui_step(name="parse_pdf", title="Parse document", icon="FileSearch")
     async def _step_parse_pdf(self, submitted: DocumentSubmissionPayload) -> Any:
-        return await workflow.execute_activity(
+        return await runbook.execute_activity(
             parse_pdf,
             submitted,
             start_to_close_timeout=timedelta(minutes=5),
@@ -110,7 +110,7 @@ class DocumentIngestWorkflow(NtroWorkflow):
     async def _step_extract_fields(
         self, ctx: DocumentIngestContext, raw: Any
     ) -> Any:
-        return await workflow.execute_activity(
+        return await runbook.execute_activity(
             extract_fields,
             ExtractInput(
                 raw=raw,
@@ -118,7 +118,7 @@ class DocumentIngestWorkflow(NtroWorkflow):
                 tenant_slug=ctx.tenant_slug,
                 entity_slug=ctx.entity_slug,
                 source_label=ctx.source,
-                task_id=workflow.info().workflow_id.split(":")[0],
+                task_id=runbook.info().workflow_id.split(":")[0],
                 ai=ctx.ai,
                 field_enums=ctx.field_enums,
             ),
@@ -182,8 +182,8 @@ class DocumentIngestWorkflow(NtroWorkflow):
         # `parent:step:slug:source` — split off the suffix). Lets the
         # commit row carry the workflow run that produced it so
         # cross-task lookups (find_committed_document) can scope reads.
-        root_task_id = workflow.info().workflow_id.split(":")[0]
-        return await workflow.execute_activity(
+        root_task_id = runbook.info().workflow_id.split(":")[0]
+        return await runbook.execute_activity(
             commit_extraction,
             CommitInput(
                 source=ctx.source,
@@ -199,7 +199,7 @@ class DocumentIngestWorkflow(NtroWorkflow):
 
     # ── Entry point ────────────────────────────────────────────────
 
-    @workflow.run
+    @runbook.run
     async def run(self, ctx: DocumentIngestContext) -> IngestedDocument:
         await self._step_await_submission(ctx)
         assert self._submitted is not None

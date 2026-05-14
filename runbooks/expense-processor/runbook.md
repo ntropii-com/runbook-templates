@@ -17,6 +17,7 @@ tags:
 jurisdictions:
   - any
 version: 0.1.1
+visibility: public
 state: DRAFT
 author: Ntropii
 

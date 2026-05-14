@@ -9,7 +9,7 @@ policy and to keep the typing consistent across runbooks.
 
 from __future__ import annotations
 
-from temporalio import activity
+from ntro.workflow import activity
 
 from ntro.capabilities import ai, files, storage
 from ntro.capabilities.trace import http_reasoning_sink_for_task
